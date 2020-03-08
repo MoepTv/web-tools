@@ -17,8 +17,9 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  */
-$USERAGENT = "twitch status v0.1";
-$CLIENT_ID = "your twitch api client secret";
+include_once 'config.php';
+$USERAGENT = "twitch status v0.1.1";
+$CLIENT_ID = $TWITCH_CLIENT_ID;
 
 
 $bgColor = ["r" => 255, "g" => 255, "b" => 255];
@@ -32,6 +33,18 @@ $user = $_GET['user'];
 if ($user === FALSE || empty($user)) {
     echo "Please specify a user parameter!";
     exit(1);
+}
+
+if (array_key_exists('bgcolor', $_GET) && !empty($_GET['bgcolor'])) {
+    $bgColor = getFromHex($_GET['bgcolor'], $bgColor);
+}
+
+if (array_key_exists('textcolor', $_GET) && !empty($_GET['textcolor'])) {
+    $textColor = getFromHex($_GET['textcolor'], $textColor);
+}
+
+if (array_key_exists('linkcolor', $_GET) && !empty($_GET['linkcolor'])) {
+    $linkColor = getFromHex($_GET['linkcolor'], $linkColor);
 }
 
 $id = FALSE;
@@ -48,6 +61,7 @@ if ($userData !== FALSE && !is_null($userData) && isset($userData['data']) && co
 
 if ($id === FALSE || empty($id)) {
     echo "Id for " . $user . " was not found?";
+    var_dump($userData);
     exit(1);
 }
 
@@ -72,13 +86,13 @@ $boldFont = '/fonts/Roboto-Bold.ttf';
 putenv('GDFONTPATH=' . realpath('.'));
 imagettftext($image, 16, 0, $height, $height / 2 - 4, $imgLinkColor, $boldFont, $name);
 if ($count > -1) {
-	imagefilledellipse($image, $height + 6, $height - 17, 12, 12, $imgRedColor);
+    imagefilledellipse($image, $height + 6, $height - 17, 12, 12, $imgRedColor);
     imagettftext($image, 10, 0, $height + 16, $height - 12, $imgRedColor, $font, $count);
-	$size = imagettfbbox(10, 0, $font, $count);
+    $size = imagettfbbox(10, 0, $font, $count);
     imagettftext($image, 10, 0, $height + 16 + $size[2] + 4, $height - 12, $imgTextColor, $font, $title);
 } else {
     imagettftext($image, 10, 0, $height, $height - 10, $imgTextColor, $font, "Offline");
-	imagefilter($profilePic, IMG_FILTER_GRAYSCALE);
+    imagefilter($profilePic, IMG_FILTER_GRAYSCALE);
 }
 
 if ($profilePic !== FALSE) {
@@ -91,7 +105,7 @@ imagedestroy($image);
 exit;
 
 function write($file, $text) {
-    $fh = fopen($file,"w");
+    $fh = fopen($file, "w");
     fwrite($fh, $text);
     fclose($fh);
 }
@@ -101,33 +115,33 @@ function getImage($url, $width, $height) {
     if (file_exists($cacheFile)) {
         return imagecreatefrompng($cacheFile);
     }
-    
-	if (endsWith($url, ".png")) {
-		$image = imagecreatefrompng($url);
-	} else if (endsWith($url, ".jpg") || endsWith($url, ".jpeg")) {
-		$image = imagecreatefromjpeg($url);
-	} else if (endsWith($url, ".gif")) {
-		$image = imagecreatefromgif($url);
-	} else {
-		return FALSE;
-	}
+
+    if (endsWith($url, ".png")) {
+        $image = imagecreatefrompng($url);
+    } else if (endsWith($url, ".jpg") || endsWith($url, ".jpeg")) {
+        $image = imagecreatefromjpeg($url);
+    } else if (endsWith($url, ".gif")) {
+        $image = imagecreatefromgif($url);
+    } else {
+        return FALSE;
+    }
     if ($image === FALSE) {
         return $image;
     }
-    
+
     imagesavealpha($image, true);
-    
+
     $sourceWidth = imagesx($image);
     $sourceHeight = imagesy($image);
-    
+
     $result = imagecreatetruecolor($width, $height);
     imagealphablending($result, false);
     imagesavealpha($result, true);
     // Copy cut and resized image to new image
     imagecopyresampled($result, $image, 0, 0, 0, 0, $width, $height, $sourceWidth, $sourceHeight);
-    
+
     imagepng($result, $cacheFile, 0);
-    
+
     return $result;
 }
 
@@ -137,12 +151,12 @@ function webQuery($url) {
     if (file_exists($cacheFile) && filemtime($cacheFile) + $interval > time()) {
         return json_decode(file_get_contents($cacheFile), true);
     }
-	
+
     global $USERAGENT, $CLIENT_ID;
     //$options     = ['http' => ['user_agent' => $USERAGENT, 'header' => ['Client-ID: ' . $CLIENT_ID]]];
     //$context     = stream_context_create($options);
     //$response    = @file_get_contents($url, false, $context);
-    
+
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
@@ -150,21 +164,41 @@ function webQuery($url) {
     curl_setopt($ch, CURLOPT_HTTPHEADER, ['Client-ID: ' . $CLIENT_ID]);
     $response = curl_exec($ch);
     curl_close($ch);
-    
-    if($response === FALSE || !isset($response) || is_null($response)) {
-       fwrite(STDERR, "Error while querying '$url'. It did not return any response?\n");
-       return FALSE;
+
+    if ($response === FALSE || !isset($response) || is_null($response)) {
+        fwrite(STDERR, "Error while querying '$url'. It did not return any response?\n");
+        return FALSE;
     }
     return json_decode($response, true);
 }
 
-function endsWith($string, $endString) 
-{ 
-    $len = strlen($endString); 
-    if ($len == 0) { 
-        return true; 
-    } 
-    return (substr($string, -$len) === $endString); 
-} 
+function endsWith($string, $endString) {
+    $len = strlen($endString);
+    if ($len == 0) {
+        return true;
+    }
+    return (substr($string, -$len) === $endString);
+}
+
+function getFromHex($hexColor, $default = ["r" => 0, "g" => 0, "b" => 0]) {
+    if (empty($hexColor)) {
+        return $default;
+    }
+
+    if ($hexColor[0] == '#') {
+        $hexColor = substr($hexColor, 1);
+    }
+
+    if (strlen($hexColor) == 6) {
+        $hex = [$hexColor[0] . $hexColor[1], $hexColor[2] . $hexColor[3], $hexColor[4] . $hexColor[5]];
+    } elseif (strlen($hexColor) == 3) {
+        $hex = [$hexColor[0] . $hexColor[0], $hexColor[1] . $hexColor[1], $hexColor[2] . $hexColor[2]];
+    } else {
+        return $default;
+    }
+
+    $rgb = array_map('hexdec', $hex);
+    return ["r" => $rgb[0], "g" => $rgb[0], "b" => $rgb[0]];
+}
 
 ?>
