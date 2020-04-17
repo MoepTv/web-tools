@@ -198,7 +198,7 @@ function getFromHex($hexColor, $default = ["r" => 0, "g" => 0, "b" => 0]) {
     }
 
     $rgb = array_map('hexdec', $hex);
-    return ["r" => $rgb[0], "g" => $rgb[0], "b" => $rgb[0]];
+    return ["r" => $rgb[0], "g" => $rgb[1], "b" => $rgb[2]];
 }
 
 ?>
