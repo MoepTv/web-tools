@@ -35,6 +35,14 @@ if ($user === FALSE || empty($user)) {
     exit(1);
 }
 
+if (array_key_exists('width', $_GET) && !empty($_GET['width'])) {
+    $width = $_GET['width'];
+}
+
+if (array_key_exists('height', $_GET) && !empty($_GET['height'])) {
+    $height = $_GET['height'];
+}
+
 if (array_key_exists('bgcolor', $_GET) && !empty($_GET['bgcolor'])) {
     $bgColor = getFromHex($_GET['bgcolor'], $bgColor);
 }
