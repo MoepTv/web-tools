@@ -20,6 +20,7 @@
 include_once 'config.php';
 $USERAGENT = "twitch status v0.1.1";
 $CLIENT_ID = $TWITCH_CLIENT_ID;
+$OAUTH_TOKEN = $TWITCH_OAUTH_TOKEN;
 
 
 $bgColor = ["r" => 255, "g" => 255, "b" => 255];
@@ -160,7 +161,7 @@ function webQuery($url) {
         return json_decode(file_get_contents($cacheFile), true);
     }
 
-    global $USERAGENT, $CLIENT_ID;
+    global $USERAGENT, $CLIENT_ID, $OAUTH_TOKEN;
     //$options     = ['http' => ['user_agent' => $USERAGENT, 'header' => ['Client-ID: ' . $CLIENT_ID]]];
     //$context     = stream_context_create($options);
     //$response    = @file_get_contents($url, false, $context);
@@ -169,7 +170,7 @@ function webQuery($url) {
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
     curl_setopt($ch, CURLOPT_USERAGENT, $USERAGENT);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Client-ID: ' . $CLIENT_ID]);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Client-ID: ' . $CLIENT_ID, 'Authorization: Bearer ' . $OAUTH_TOKEN]);
     $response = curl_exec($ch);
     curl_close($ch);
 
