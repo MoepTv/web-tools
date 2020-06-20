@@ -23,9 +23,9 @@ $CLIENT_ID = $TWITCH_CLIENT_ID;
 $OAUTH_TOKEN = $TWITCH_OAUTH_TOKEN;
 
 
-$bgColor = ["r" => 255, "g" => 255, "b" => 255];
-$textColor = ["r" => 45, "g" => 45, "b" => 45];
-$linkColor = ["r" => 99, "g" => 71, "b" => 159];
+$bgColor = ["r" => 255, "g" => 255, "b" => 255, "a" => 0];
+$textColor = ["r" => 45, "g" => 45, "b" => 45, "a" => 0];
+$linkColor = ["r" => 99, "g" => 71, "b" => 159, "a" => 0];
 
 $height = 64;
 $width = 300;
@@ -81,11 +81,12 @@ if ($streamData !== FALSE && !is_null($streamData) && isset($streamData['data'])
 }
 
 $image = @imagecreatetruecolor($width, $height) or die("Cannot Initialize new GD image stream");
+imagesavealpha($image, true);
 
-$imgBackgroundColor = imagecolorallocate($image, $bgColor['r'], $bgColor['g'], $bgColor['b']);
+$imgBackgroundColor = imagecolorallocatealpha($image, $bgColor['r'], $bgColor['g'], $bgColor['b'], $bgColor['a']);
 $imgRedColor = imagecolorallocate($image, 255, 0, 0);
-$imgTextColor = imagecolorallocate($image, $textColor['r'], $textColor['g'], $textColor['b']);
-$imgLinkColor = imagecolorallocate($image, $linkColor['r'], $linkColor['g'], $linkColor['b']);
+$imgTextColor = imagecolorallocatealpha($image, $textColor['r'], $textColor['g'], $textColor['b'], $textColor['a']);
+$imgLinkColor = imagecolorallocatealpha($image, $linkColor['r'], $linkColor['g'], $linkColor['b'], $linkColor['a']);
 
 imagefill($image, 0, 0, $imgBackgroundColor);
 $profilePic = getImage($profilePicUrl, $height - 8, $height - 8);
@@ -189,7 +190,7 @@ function endsWith($string, $endString) {
     return (substr($string, -$len) === $endString);
 }
 
-function getFromHex($hexColor, $default = ["r" => 0, "g" => 0, "b" => 0]) {
+function getFromHex($hexColor, $default = ["r" => 0, "g" => 0, "b" => 0, "a" => 0]) {
     if (empty($hexColor)) {
         return $default;
     }
@@ -198,16 +199,18 @@ function getFromHex($hexColor, $default = ["r" => 0, "g" => 0, "b" => 0]) {
         $hexColor = substr($hexColor, 1);
     }
 
-    if (strlen($hexColor) == 6) {
-        $hex = [$hexColor[0] . $hexColor[1], $hexColor[2] . $hexColor[3], $hexColor[4] . $hexColor[5]];
+    if (strlen($hexColor) == 8) {
+        $hex = [$hexColor[0] . $hexColor[1], $hexColor[2] . $hexColor[3], $hexColor[4] . $hexColor[5], $hexColor[6] . $hexColor[7]];
+    } elseif (strlen($hexColor) == 6) {
+        $hex = [$hexColor[0] . $hexColor[1], $hexColor[2] . $hexColor[3], $hexColor[4] . $hexColor[5], "00"];
     } elseif (strlen($hexColor) == 3) {
-        $hex = [$hexColor[0] . $hexColor[0], $hexColor[1] . $hexColor[1], $hexColor[2] . $hexColor[2]];
+        $hex = [$hexColor[0] . $hexColor[0], $hexColor[1] . $hexColor[1], $hexColor[2] . $hexColor[2], "00"];
     } else {
         return $default;
     }
 
     $rgb = array_map('hexdec', $hex);
-    return ["r" => $rgb[0], "g" => $rgb[1], "b" => $rgb[2]];
+    return ["r" => $rgb[0], "g" => $rgb[1], "b" => $rgb[2], "a" => $rgb[3] / 2];
 }
 
 ?>
